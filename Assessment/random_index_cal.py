@@ -96,11 +96,12 @@ class Data_manipulate:
                 vector_sum_y[j] += Vy[i][j]
                 vector_sum_z[j] += Vz[i][j]
 
-        self.v_direction_detect(v_len_matrix,Vx,'x')
-        self.v_direction_detect(v_len_matrix,Vy,'y')
-        self.v_direction_detect(v_len_matrix,Vz,'z')
-        self.drawCumulativeHist(v_len_matrix)
-        self.drawHist(v_len_matrix)
+        #to show the angle
+        self.v_direction_detect(v_len_matrix,Vx,Vy,Vz,'x')
+        self.v_direction_detect(v_len_matrix,Vy,Vz,Vx,'y')
+        self.v_direction_detect(v_len_matrix,Vz,Vx,Vy,'z')
+        #self.drawCumulativeHist(v_len_matrix)
+        #self.drawHist(v_len_matrix)
 
         #calculate the mean of velocity
         for i in range(self.terminal-1):
@@ -124,15 +125,20 @@ class Data_manipulate:
 
         return result
 
-    def v_direction_detect(self,velocity,one_dir_v,direct):
-        v_length = []
+    def v_direction_detect(self,velocity,one_dir_v,two_dir_v,thr_dir_v,direct):
         v_one_dir = []
         for i in range(self.sample_size):
-            v_length += velocity[i]
-            v_one_dir += one_dir_v[i]
-        for i in range(len(v_one_dir)):
-            v_one_dir[i] /= v_length[i]
-            v_one_dir[i] = math.acos(v_one_dir[i])
+            for j in range(self.terminal-1):
+                v_tem = math.sqrt(one_dir_v[i][j]*one_dir_v[i][j]+two_dir_v[i][j]*two_dir_v[i][j])
+                if v_tem == 0:
+                    v_tem = 0.0000001
+                temp_dir =  one_dir_v[i][j] / v_tem
+                if two_dir_v[i][j] >= 0:
+                    temp_dir = math.acos(temp_dir)
+                else:
+                    temp_dir = 2*math.pi-math.acos(temp_dir)
+                v_one_dir.append(temp_dir)
+        
         pyplot.hist(v_one_dir,300)
         pyplot.xlabel('velocity_direction_'+direct)
         pyplot.ylabel('frequency')
