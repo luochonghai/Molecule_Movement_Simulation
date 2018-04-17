@@ -9,7 +9,7 @@
 #define PARA_4 60
 #define PARA_5 2
 #define PARA_6 1.008
-#define LIFE 600
+#define LIFE 10
 
 using namespace std;
 
@@ -65,10 +65,10 @@ private:
 		double distance = sqrt(delta_cor[0] * delta_cor[0] + delta_cor[1] * delta_cor[1] + delta_cor[2] * delta_cor[2]);
 		double temp_f = PARA_3 / distance / distance / distance;
 		double force_pair = temp_f*temp_f+PARA_2*temp_f*distance-1/ distance;
-		double time_descend = 1 / (1+pow(PARA_6,-timer+LIFE/2));
-		time_descend = 1 - time_descend;
+		//double time_descend = 1 / (1+pow(PARA_6,-timer+LIFE/2));
+		//time_descend = 1 - time_descend;
 		force_pair *= PARA_4;
-		force_pair *= time_descend;
+		//force_pair *= time_descend;
 		for (int j = 0; j < 3; ++j)
 		{
 			force[j] = force_pair * delta_cor[j]/distance;
@@ -91,8 +91,83 @@ private:
 	}
 };
 
+class Interaction
+{
+public:
+	Interaction() = default;
+	Interaction(int Sample_size,double Interval,double K_index,double Length_dro,double Length_box,double Terminal):
+	sample_size(Sample_size),interval(Interval),K(K_index),length_dro(Length_dro),length_box(Length_box),terminal(Terminal){}
+	void Py_evaluation_expdata(const char* file_name, const char* module_name)
+	{
+		py_evaluation(file_name,module_name);
+	}
+private:
+	int sample_size;
+	double interval;
+	double K;
+	double length_dro;
+	double length_box;
+	double terminal;
+	bool py_evaluation(const char* file_name, const char* module_name)
+	{
+		//Py_Initialize();
+
+		//to state the variable(s)
+		PyObject *pModule = NULL;
+		PyObject *pFunc = NULL;
+
+		//IMPORTANT!!change the current_file_path
+		PyRun_SimpleString("import sys;sys.path.append('./')");
+
+		//define invoking file's name
+		PyObject* moduleName = PyUnicode_FromString(file_name);
+		pModule = PyImport_Import(moduleName);
+		if (!pModule)
+		{
+			cout << "[ERROR]:Python get module failed." << endl;
+			return 0;
+		}
+		cout << "[INFO]Python get module succeed." << endl;
+		//pModule = PyImport_ImportModule("random_index_cal");
+
+
+		//define the invoking function's name
+		pFunc = PyObject_GetAttrString(pModule, module_name);
+
+		//invoke the function
+		PyEval_CallObject(pFunc, NULL);
+
+		//finish the invoking process
+		//Py_Finalize();
+
+		/*test ok*/
+		//PyRun_SimpleString("import sys; sys.path.append('.')");
+		//PyRun_SimpleString("import mytest;");
+		//PyRun_SimpleString("print(mytest.myabs(-2.0))");
+		//Py_Finalize();
+		return 0;
+	}
+};
+
 int main()
 {
+	Py_Initialize();
+	//to initialize the py_interaction_mode
+	Interaction inter_py(SIZE,DELTA_T,1,1,HALF_SCALE,LIFE);
+	inter_py.Py_evaluation_expdata("random_index_cal","cpp_invoke");
+
+	//to store the coordinate of simulation_model
+
+	//double **Cx = new double*[SIZE];
+	//double **Cy = new double*[SIZE];
+	//double **Cz = new double*[SIZE];
+	//for (int i = 0; i < SIZE; ++i)
+	//{
+	//	Cx[i] = new double[LIFE / DELTA_T];
+	//	Cy[i] = new double[LIFE / DELTA_T];
+	//	Cz[i] = new double[LIFE / DELTA_T];
+	//}
+	
 	timer = 0;
 	srand(unsigned(time(NULL)));
 	Fly *groups = new Fly[SIZE];
@@ -118,7 +193,14 @@ int main()
 				coordi << r << " ";
 				for (int u = 0; u < 3; ++u)
 				{
-					coordi << " " << groups[r].original_state()[u] << " ";
+					auto cor_num = groups[r].original_state()[u];
+					coordi << " " << cor_num << " ";
+					//if (u == 0)
+					//	Cx[r][0] = cor_num;
+					//else if (u == 1)
+					//	Cy[r][0] = cor_num;
+					//else
+					//	Cz[r][0] = cor_num;
 				}
 				coordi << endl;
 			}
@@ -137,12 +219,31 @@ int main()
 			coordi << j << " ";
 			for (int u = 0; u < 3; ++u)
 			{
-				coordi  << " " << groups[j].original_state()[u] << " ";
+				auto temp_num = groups[j].original_state()[u];
+				coordi  << " " << temp_num << " ";
+				//if (u == 0)
+				//	Cx[j][timer] = temp_num;
+				//else if (u == 1)
+				//	Cy[j][timer] = temp_num;
+				//else
+				//	Cz[j][timer] = temp_num;
 			}
 			coordi << endl;
 		}
 	}
 	coordi.close();
+
+	inter_py.Py_evaluation_expdata("read_cordinate_text", "model_evaluation");
+	//for (int i = 0; i < SIZE; ++i)
+	//{
+	//	delete Cx[i];
+	//	delete Cy[i];
+	//	delete Cz[i];
+	//}
+	//delete Cx;
+	//delete Cy;
+	//delete Cz;
+	Py_Finalize();
     return 0;
 }
 
