@@ -2,6 +2,11 @@ import random_index_cal
 import xlrd
 import math
 from matplotlib import pyplot
+import numpy as np
+from scipy.optimize import curve_fit
+
+def func(x,a,b):
+	return a*np.log(x/b)
 
 class Groupnum_Tri_circumR:
 	def velocity_bar(self,sx,sy,sz):
@@ -92,26 +97,39 @@ if __name__ == '__main__':
 		Max_ol.append(result_matrix[i][4])
 		Bar_ol.append(result_matrix[i][3])
 
-	pyplot.scatter(Group_n,Max_r)
-	pyplot.xlabel('group_number')
-	pyplot.ylabel('max_radius')
-	pyplot.title('max_R-group_num curve')
-	pyplot.show()
+	#fit it!
+	# z1 = np.polyfit(Group_n,Max_ol,4)
+	# p1 = np.poly1d(z1)
+	# yvals = p1(Group_n)
+	# plot2 = pyplot.plot(Group_n,yvals)
+	# pyplot.show()
 
-	pyplot.scatter(Group_n,Bar_r)
-	pyplot.xlabel('group_number')
-	pyplot.ylabel('mean_radius')
-	pyplot.title('mean_R-group_num curve')
-	pyplot.show()
+	popt,pcov = curve_fit(func,Group_n,Max_ol)
+	a = popt[0]
+	b = popt[1]
+	yvals = func(Group_n,a,b)
+	plot1 = pyplot.plot(Group_n,yvals)
 
-	pyplot.scatter(Group_n,Max_ol)
+	# pyplot.scatter(Group_n,Max_r)
+	# pyplot.xlabel('group_number')
+	# pyplot.ylabel('max_radius')
+	# pyplot.title('max_R-group_num curve')
+	# pyplot.show()
+
+	# pyplot.scatter(Group_n,Bar_r)
+	# pyplot.xlabel('group_number')
+	# pyplot.ylabel('mean_radius')
+	# pyplot.title('mean_R-group_num curve')
+	# pyplot.show()
+
+	plot2 = pyplot.scatter(Group_n,Max_ol)
 	pyplot.xlabel('group_number')
 	pyplot.ylabel('max_overload')
 	pyplot.title('max_overload-group_num curve')
 	pyplot.show()
 
-	pyplot.scatter(Group_n,Bar_ol)
-	pyplot.xlabel('group_number')
-	pyplot.ylabel('mean_overload')
-	pyplot.title('mean_overload-group_num curve')
-	pyplot.show()
+	# pyplot.scatter(Group_n,Bar_ol)
+	# pyplot.xlabel('group_number')
+	# pyplot.ylabel('mean_overload')
+	# pyplot.title('mean_overload-group_num curve')
+	# pyplot.show()
