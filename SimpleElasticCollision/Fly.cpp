@@ -6,14 +6,15 @@ using namespace std;
 Fly::Fly() = default;
 
 //to initialize the velocity& coordinate of each node
-Fly::Fly(double initial_cor[3],double initial_vel[3]):
-		cor(), vel()
+Fly::Fly(double initial_cor[3],double initial_vel[3],double ini_v):
+		cor(), vel(),v_len()
 	{
-	    for (int i = 0; i < 3; ++i)
-	    {
-		    vel[i] = initial_vel[i];
-		    cor[i] = initial_cor[i];
-	    }
+	v_len = ini_v;
+	for (int i = 0; i < 3; ++i)
+	{
+		vel[i] = initial_vel[i];
+		cor[i] = initial_cor[i];
+	}
 	}
 	
 double* Fly::original_state()//print the coordinate of node
@@ -26,20 +27,24 @@ double * Fly::original_vel()//print the velocity of node
 	return vel;
 }
 
-void Fly::ModifyAnoVel(double *new_vel)
+//change the velocity direction of node
+void Fly::ModifyAnoVel(double *new_vel,double *new_coo)
 {
 	for (int i = 0; i < 3; ++i)
+	{
 		next_vel[i] = new_vel[i];
+		next_cor[i] = new_coo[i];
+	}
 }
 
-void Fly::ModAnoVel(double *new_vel)
+void Fly::ModAnoVel(double *new_vel,double *new_coo)
 {
-	ModifyAnoVel(new_vel);
+	ModifyAnoVel(new_vel,new_coo);
 }
 	
-bool Fly::transfer(double another_vel[3],double another_node[3])//to change the velocity direction of Fly: return true if collision happens
+bool Fly::transfer(double another_vel[3],double another_node[3],double an_v)//to change the velocity direction of Fly: return true if collision happens
 	{
-		return	collide_node(another_vel,another_node);
+		return	collide_node(another_vel,another_node,an_v);
 	}
 	
 double* Fly::transfer()//when the velocity has been calculated, calculate the new coordinate
@@ -47,14 +52,14 @@ double* Fly::transfer()//when the velocity has been calculated, calculate the ne
 		return transfer_coordinate();
 	}
 
-bool Fly::collide_node(double another_vel[3],double another_node[3])//to change the velocity direction of 2 nodes when collision happens
+bool Fly::collide_node(double another_vel[3],double another_node[3],double an_v)//to change the velocity direction of 2 nodes when collision happens
 	{
 		//to calculate the coordinate of 2 nodes if they do not collide
 		double B1Next[3], B2Next[3];
 		for (int i = 0; i < 3; ++i)
 		{
-			B1Next[i] = cor[i] + vel[i] * DELTA_T;
-			B2Next[i] = another_node[i] + another_vel[i] * DELTA_T;
+			B1Next[i] = cor[i] + v_len*vel[i] * DELTA_T;
+			B2Next[i] = another_node[i] + an_v*another_vel[i] * DELTA_T;
 		}
 		//to check collision first
 		//1st type: the two nodes have been collided.
@@ -97,21 +102,17 @@ bool Fly::collide_node(double another_vel[3],double another_node[3])//to change 
 
 			//change velocity of the very node 1st: 
 			//|v| remains the same.The new v's direction is pointed from B1 to D(next_cor).
-			double VelNewDir[3], B1D[3];
+			double B1D[3];
 			for (int bd = 0; bd < 3; ++bd)
 				B1D[bd] = next_cor[bd] - cor[bd];
-			norm_vec(B1D, VelNewDir, 3);
-			double v_len = sqrt(v2_multi(vel, vel, 3));
-			for (int vi = 0; vi < 3; ++vi)
-				next_vel[vi] = v_len * VelNewDir[vi];
+			norm_vec(B1D, next_vel, 3);
+
 			//change velocity of another node 2nd
-			double VelAnoDir[3], B2D[3];
+			double B2D[3];
 			for (int bd = 0; bd < 3; ++bd)
 				B2D[bd] = ano_new[bd] - ano_cor[bd];
-			norm_vec(B2D, VelAnoDir, 3);
-			double v_len2 = sqrt(v2_multi(another_vel, another_vel, 3));
-			for (int vi = 0; vi < 3; ++vi)
-				another_vel[vi] = v_len2 * VelAnoDir[vi];//store the result into another_vel element
+			norm_vec(B2D, another_vel, 3);
+
 			return true;
 		}
 		else//2nd type: the 2 nodes may collide
@@ -184,21 +185,16 @@ bool Fly::collide_node(double another_vel[3],double another_node[3])//to change 
 
 				//change velocity of the very node 1st: 
 				//|v| remains the same.The new v's direction is pointed from B1 to D(next_cor).
-				double VelNewDir[3], B1D[3];
+				double B1D[3];
 				for (int bd = 0; bd < 3; ++bd)
 					B1D[bd] = next_cor[bd] - B1_col[bd];
-				norm_vec(B1D, VelNewDir, 3);
-				double v_len = sqrt(v2_multi(vel, vel, 3));
-				for (int vi = 0; vi < 3; ++vi)
-					next_vel[vi] = v_len * VelNewDir[vi];
+				norm_vec(B1D, next_vel, 3);
+
 				//change velocity of another node 2nd
-				double VelAnoDir[3], B2D[3];
+				double B2D[3];
 				for (int bd = 0; bd < 3; ++bd)
 					B2D[bd] = ano_new[bd] - B2_col[bd];
-				norm_vec(B2D, VelAnoDir, 3);
-				double v_len2 = sqrt(v2_multi(another_vel, another_vel, 3));
-				for (int vi = 0; vi < 3; ++vi)
-					another_vel[vi] = v_len2 * VelAnoDir[vi];//store the result into another_vel element
+				norm_vec(B2D, another_vel, 3);
 
 				return true;
 			}
@@ -206,12 +202,12 @@ bool Fly::collide_node(double another_vel[3],double another_node[3])//to change 
 		return false;
 	}
 
-
-
 double* Fly::transfer_coordinate()
 	{
 	for (int i = 0; i < 3; ++i)
-		cor[i] += vel[i] * DELTA_T;
+	{
+		cor[i] += v_len*vel[i] * DELTA_T;
+	}
 		return cor;
 	}
 
@@ -231,12 +227,12 @@ void Fly::updateCol()
 	after_col();
 }
 
-bool Fly::pinball()
+int Fly::pinball()//return 0 if no collision; 1 if colliding 1 time;2 if 2 times; 3 if 3 times.
 {
 	//node's coordinate at t+delta_t moment
 	double NextMomCoor[3];
 	for (int i = 0; i < 3; ++i)
-		NextMomCoor[i] = cor[i] + vel[i] * DELTA_T;
+		NextMomCoor[i] = cor[i] + v_len*vel[i] * DELTA_T;
 
 	//the bias of box when colliding x time(s)
 	int Time1Dir[6][3] = {1,0,0,-1,0,0,0,1,0,0,-1,0,0,0,1,0,0,-1};
@@ -250,7 +246,7 @@ bool Fly::pinball()
 
 	//check whether it collides or not
 	if (CheckNodeInBox(NextMomCoor, CenBoxScale))
-		return false;//no collision in this time step
+		return 0;//no collision in this time step
 
 	//check whether it collides 1 time
 	for (int i1 = 0; i1 < 6; ++i1)//i1 means direction(right,left,front,back,top,down)
@@ -264,7 +260,7 @@ bool Fly::pinball()
 		{
 			//it can just go into one box
 			Colli1Time(i1,NextMomCoor);
-			return true;
+			return 1;
 		}
 	}
 
@@ -278,7 +274,7 @@ bool Fly::pinball()
 		if (SigCol[1])
 		{
 			Colli2Time(i2,NextMomCoor);
-			return true;
+			return 2;
 		}
 	}
 
@@ -292,7 +288,7 @@ bool Fly::pinball()
 		if (SigCol[2])
 		{
 			Colli3Time(i3,NextMomCoor);
-			return true;
+			return 3;
 		}
 	}
 }
@@ -318,15 +314,10 @@ void Fly::Colli1Time(int DirNum,double* DestCoor)//node goes into boxes adjacent
 	}
 
 	//change velocity of node: |v| remains the same.The new v's direction is pointed from B0 to D.
-	double VelNewDir[3],BD[3];
+	double BD[3];
 	for (int bd = 0; bd < 3; ++bd)
 		BD[bd] = solu[bd] - B0[bd];
-	norm_vec(BD,VelNewDir,3);
-	double v_len = sqrt(v2_multi(vel,vel,3));
-	for (int vi = 0; vi < 3; ++vi)
-	{
-		next_vel[vi] = v_len * VelNewDir[vi];
-	}
+	norm_vec(BD,next_vel,3);
 }
 
 void Fly::Colli2Time(int DirNum, double* DestCoor)//node goes into boxes in the middle of edge(12 in 27)
@@ -361,13 +352,10 @@ void Fly::Colli2Time(int DirNum, double* DestCoor)//node goes into boxes in the 
 	RefSolu(B2,C1,NormalVec[1-pl_i],next_cor);//calculate D(here is cor)
 
 	//change velocity of node: |v| remains the same.The new v's direction is pointed from B2 to D.
-	double VelNewDir[3], BD[3];
+	double BD[3];
 	for (int bd = 0; bd < 3; ++bd)
 		BD[bd] = cor[bd] - B2[bd];
-	norm_vec(BD, VelNewDir, 3);
-	double v_len = sqrt(v2_multi(vel, vel, 3));
-	for (int vi = 0; vi < 3; ++vi)
-		next_vel[vi] = v_len * VelNewDir[vi];
+	norm_vec(BD, next_vel, 3);
 }
 
 void Fly::Colli3Time(int DirNum, double* DestCoor)//node goes into boxes on the corners(8 in 27)
@@ -412,6 +400,7 @@ void Fly::Colli3Time(int DirNum, double* DestCoor)//node goes into boxes on the 
 		if (cal_dist(B2, O1_cor) < double(ColHalfScale)*sqrt3)
 			break;
 	}
+
 	RefSolu(B2,A1,NormalVec[pl_j],A2);//calculate A2
 	RefSolu(B2,C1,NormalVec[pl_j],C2);//calculate C2
 
@@ -421,11 +410,8 @@ void Fly::Colli3Time(int DirNum, double* DestCoor)//node goes into boxes on the 
 	RefSolu(B3,C2,NormalVec[pl_k],next_cor);//calculate D(here is cor)
 
 	//change velocity of node: |v| remains the same.The new v's direction is pointed from B2 to D.
-	double VelNewDir[3], BD[3];
+	double BD[3];
 	for (int bd = 0; bd < 3; ++bd)
 		BD[bd] = cor[bd] - B3[bd];
-	norm_vec(BD, VelNewDir, 3);
-	double v_len = sqrt(v2_multi(vel, vel, 3));
-	for (int vi = 0; vi < 3; ++vi)
-		next_vel[vi] = v_len * VelNewDir[vi];
+	norm_vec(BD, next_vel, 3);
 }

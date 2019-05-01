@@ -1,6 +1,5 @@
 #include"stdafx.h"
 using namespace std;
-using namespace cv;
 
 //two-vector multiplication
 double v2_multi(double*a, double*b, int len)
@@ -49,24 +48,6 @@ bool CheckNodeInBox(double *node_cor, double*box_scale)
 		}
 	}
 	return signal;
-}
-
-//use opencv to solve equation(useful!!!)
-void gaussin(double a[3][3], double b[3], double x[3])
-{
-	Mat A = Mat(3,3,CV_64F,a).clone(), B = Mat_<double>(3, 1),X;
-	//memcpy(A.data,a,sizeof(double)*9);
-	memcpy(B.data, b, sizeof(double) * 3);
-	double det_val = determinant(A);
-	cout << det_val << endl;
-	while (det_val == 0)
-	{
-		for (int i = 0; i < 3; ++i)
-			a[i][i] += 0.01;
-		A = Mat(3, 3, CV_64F, a).clone();
-	}
-	solve(A, B, X, CV_LU);
-	memcpy(x,X.data,sizeof(double)*3);
 }
 
 //calculate the crossover point between straight_line AC(not segment_line!!!) and plane P, the result is stored at B

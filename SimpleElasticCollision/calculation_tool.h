@@ -17,15 +17,8 @@ double cal_dist(double*, double*);
 //check whether a node is in a box
 bool CheckNodeInBox(double *,double*);
 
-//calculate the solution of equation
-void gaussin(double a[3][3], double b[3],double solu[3]);
-
-//weak version of gaussin() function
-void gaussin_weak(double a[3][3], double b[3], double x[3]);
-
 //calculate the target node's coordinate
 void RefSolu(double*B, double* C, double *NormalVec, double *D);
 
 //tell which plane of the index_cube can AC intersect: 0,1--left,right 2,3--front,back 4,5--up,down
 void CalLinePlane(double *A, double* C, double *NormalVec, double *B,double wall_value);
-
